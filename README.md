@@ -11,7 +11,7 @@ Usage
         console.log(result);
       },
       error: function(error) {
-        console.error(error);
+        console.log(error);
       }
     });
     rpc({ params: { a: 10, b: 20 } });
@@ -30,8 +30,23 @@ Usage
       params: { a: 10, b: 2 }
     });
     // console => 5
-
-ToDo
-==============
-
-Add test
+    
+    
+    var rpcm = $.jsonrpcManager({
+      url: '/jsonrpc',
+      method: 'sum',
+      success: function(result) {
+        console.log(result);
+      },
+      error: function(error) {
+        console.log(error);
+      }
+    });
+    $('#buttonA').on('click', function(evt) {
+      rpcm.send({
+        params: { a: 10, b: 20 }
+      });
+    });
+    $('#buttonB').on('click', function(evt) {
+      rpcm.abort();
+    })

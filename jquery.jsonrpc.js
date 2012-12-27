@@ -3,56 +3,70 @@
 $.extend({
     jsonrpc: function(options) {
         var defaultOpts = {};
-        [ 'url', 'method', 'success', 'error' ]
-            .forEach(function(name) {
-                if (options[name]) defaultOpts[name] = options[name];
-            });
+        [ 'url', 'method', 'success', 'error' ].forEach(function(name) {
+            if (options[name])
+                defaultOpts[name] = options[name];
+        });
         var emptyFn = function() {};
-        if (typeof(defaultOpts.success) != 'function')
+        if (typeof(defaultOpts.success) !== 'function')
             defaultOpts.success = emptyFn;
-        if (typeof(defaultOpts.error) != 'function')
+        if (typeof(defaultOpts.error) !== 'function')
             defaultOpts.error = emptyFn;
-
+        
         var rpcid = 1;
         
         return function(options) {
-            var postdata = {
+            var sendData = {
                 jsonrpc: '2.0',
                 id: options.id || rpcid++,
                 method: options.method || defaultOpts.method || '',
                 params: options.params || {}
             };
 
-            var cb_success = typeof(options.success) == 'function'
+            var cbSuccess = typeof(options.success) === 'function'
                 ? options.success : defaultOpts.success;
-            var cb_error = typeof(options.error) == 'function'
+            var cbError = typeof(options.error) === 'function'
                 ? options.error : defaultOpts.error;
 
-            var ajaxopts = {
-                url: options.url || defaultOpts.url,
+            var ajaxOpts = {
+                url: options.url || defaultOpts.url || '/',
                 contentType: 'application/json',
                 dataType: 'json',
                 type: 'POST',
-                data: JSON.stringify(postdata),
-                timeout: options.timeout ? options.timeout : 0,
+                data: JSON.stringify(sendData),
+                timeout: options.timeout || 0,
                 success: function(response) {
                     if (response && !response.error) {
-                        return cb_success(response.result);
+                        return cbSuccess(response.result);
                     }
                     else if (response && response.error) {
-                        return cb_error(response.error);
+                        return cbError(response.error);
                     }
                     else {
-                        return cb_error(response);
+                        return cbError(response);
                     }
                 },
                 error: function(xhr, status, error) {
-                    cb_error(error);
+                    cbError(error);
                     return;
                 }
             };
 
-            return $.ajax(ajaxopts);
+            return $.ajax(ajaxOpts);
+        };
+    },
+
+    jsonrpcManager: function(options) {
+        var jqxhr, request = $.jsonrpc(options);
+        return {
+            abort: function() {
+                if (jqxhr) jqxhr.abort();
+                jqxhr = null;
+            },
+            send: function(options) {
+                if (jqxhr) jqxhr.abort();
+                jqxhr = request(options);
+            }
         };
     }
 });
